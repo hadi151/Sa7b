@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>سحبة القرعة</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      direction: rtl;
+      text-align: center;
+      background: #f4f4f4;
+      margin: 0;
+    }
+
+    input, textarea, button {
+      box-sizing: border-box;
+    }
+
+    /* الرسالة العلوية */
+    #topMessage {
+      background: #222;
+      color: #fff;
+      padding: 14px;
+      font-size: 16px;
+    }
+
+    /* الشبكة */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 10px;
+      max-width: 650px;
+      margin: 20px auto;
+    }
+
+    .box {
+      background: white;
+      border: 1px solid #aaa;
+      height: 55px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .box input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      background: transparent;
+    }
+
+    .box input:focus {
+      outline: none;
+      background: #eef;
+    }
+
+    .winner {
+      background: gold !important;
+    }
+
+    /* المدخلات */
+    #detailsInput {
+      width: 85%;
+      padding: 10px;
+      font-size: 15px;
+    }
+
+    #codeInput {
+      width: 70%;
+      padding: 10px;
+      font-size: 15px;
+    }
+
+    button {
+      padding: 12px;
+      font-size: 16px;
+      margin: 8px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: gray;
+    }
+
+    /* 📱 الهاتف */
+    @media (max-width: 600px) {
+      #grid {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      #detailsInput, #codeInput, button {
+        width: 95%;
+      }
+    }
+
+    /* 🔔 نافذة الإنذار */
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    #alertBox {
+      background: #d9ecff; /* أزرق فاتح */
+      padding: 25px;
+      border-radius: 12px;
+      width: 85%;
+      max-width: 350px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    }
+
+    #alertBox h2 {
+      margin-top: 0;
+    }
+
+    #winnerName {
+      margin-top: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #004a99;
+    }
+
+    #closeAlert {
+      margin-top: 20px;
+      background: #004a99;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="topMessage">
+  للحصول على الكود ارسل ٥٠ ألف ليرة على الرقم التالي: <b>81819908</b>
+</div>
+
+<h2>سحبة من 100 رقم</h2>
+
+<textarea id="detailsInput" placeholder="اكتب هنا تفاصيل السحبة"></textarea>
+
+<div id="grid"></div>
+
+<input type="password" id="codeInput" placeholder="أدخل كود التفعيل">
+
+<br>
+
+<button id="drawBtn" onclick="runDraw()">تنفيذ القرعة</button>
+<button id="newDrawBtn" onclick="newDraw()" style="display:none;">قرعة جديدة</button>
+
+<div id="result"></div>
+
+<!-- 🔔 نافذة الإنذار -->
+<div id="overlay">
+  <div id="alertBox">
+    <h2>🎉 تم اختيار الرابح</h2>
+    <p>مبروك للفائز</p>
+    <div id="winnerName"></div>
+    <button id="closeAlert" onclick="closeAlert()">إغلاق</button>
+  </div>
+</div>
+
+<script>
+const VALID_CODES = ["!4I#ouLKZ8J","!50F6byTuR0","!7yu6F","!81oZqQmo","!AisBwusz","!EuwKa2JA","!JvC#D%Z#cL","!W@fco?k","!bFdBPJ2BD","!gxK4qHA","!iU2FXxM","!n$q6vZn?V2","!ndlNec6hkzP","!wLdI7epBi","#8jJWE","#8lYP$uqH9","#AlRLlqH","#Ga7qyGa","#M@gLMEC@u","#ZV4v$","#b0epk","#i0M%ng2rH","#k6bTyljX55M","#n%xRAk&6XEt","#rSi2LY8vR","#sw95c!WUd","#tNmJb1R","#thKj8","$$CU3vZNB","$$LSeznrXMqU","$1SHlelzRl","$@@Mk9BH6a","$B57ri3E3sha","$Dl03Cz93#i","$NYK0C%8lQ7k","$NqhJYA%09","$c2lkMznc","$eefI!1y","$fN34C%NkpX4","$h5BpL@bCDf","$j@w0#cY6Ul1","$kL%wgG","$ksc$kaZ","$nlbcq1c","$tY@ql","$uM@M7x","$w89nNwzIAMl","%$JTJ9Ar#","%4ykVYhY?5z","%?6$xj","%G6qyo","%TRJmf","%Wig0WC","%epu?UT7r","%iYHjlQ","%tv%peG","%yI%Ut","%z7t%l?cGY3","&$mQ35tZkB1Y","&1tl8C","&3XfrHU","&7oOjQe","&88p6YN%Jz","&@2mG2K4","&@51KVH7","&AdM1i$","&HBxCtzK8L2x","&J&&#ntNda","&J02a9BTmhlP","&L47ERQ","&Lq4DnZC","&QAvS3RE","&QG#853Ju?9","&RZDb36$","&ev!XWP&qz&$","&hZDsj857QXM","&kP8l8","&n@dl?08N&","&uMkHpZ7pQs1","0&@BTi1WxKC","01e3EWWBqd","05xMYcZ","07yzmFHD","0BlihcnDs!p","0DL?v57YNt","0JP39EdH@t","0NbCLDf","0O%%Ed14z","0Si7E5@Z","0UagYM6J$L","0Wr0e7i$?wJb","0Y5m?LhOJ","0ZSgRB","0fON7$ULCIXp","0mz!CksoQz","0r0fajB","0uvN8FwWn","1#ewZmT","18EUfp5ek&AE","1?QnFQRTp4R","1@iEuR8","1B7e5jZGe","1Du4RM#NdZ","1HV#?MD@","1PrsIC","1SK2r2n","1SwJiA84NOHI","1bF!rwa7YE","1eDp$a$","1iU7ly","1mF8rYc","1oT7bJ$N","1rqbyb","21iT!jDKRg","25RayI%B","26w3W6T","2GfTYLEr7R","2O@HjJOo","2Sa?vabt","2Ut!KdDCJx","2au6RmTWQFuk","2e%BSjGTvwY5","2gETq2tvkj","2qhPgto","3#RK2#sw5nX","3%GuPlPW","33i?l8SKA@N","38AzRKUe5","39v2s&3!8%q","3EG@1jNtPU@","3LHE2kV","3OWFDrO","3Z0nE&","3etjjufqvi","3g!geU6f","3g1yTN%3","3gRG6b%u","3poPnR1X","3uiN%X0","4!YCP?nCAc5%","43zRq4$o&&","457uCswXo","4?cwbKeocV%e","4?fyj!","4BjVev","4CxFA9EDpwL","4H0Gss","4KZXlWOTGY","4MvC3S","4Mwd3%xr","4afCGKgTV","4orsTb","4p30qRk","4z5JZ!i09Yv","5&C%VIC@","5&xjIu4lAGn","52rTuO%","54MHrD","5?%SThzz","5AxfhXLh","5BkKEqJF","5GHIT5Wg237O","5HvT0iM3dCr","5Wp7Vpd%Rv","5dr!4RPX","5e8hS85j7hON","5fBs#$pN#n9x","5oW6bX","5p$I9MuEU5c","5rzZnf4sy#AA","5t%ypt2ZZ&","5uaql5cTS!E","5wfK%4SA","5zBT7&Q8Cj","6JC$f94k","6L!G!s59sU","6MA#0oF","6RwBo581","6VF8n$bO","6WhJ%dt3pW2","6cjQHL@M89","6dsqW$tbuQw","6gd18!mLF?","7!&JDyE","73D!D&","79lZ9Da#x7","7@bl%eJ","7Geie6KEL","7L#466","7Nprp7Rp","7P!NQPir","7c4Go$","7dhC0QbBnwqG","7kSlwf","7mKbPPZ1hJX","7nTxgOzwH5","7pRmvDP8SN","7t$AMd","7yGpa9BwwNMY","86#iS?","8AVJ6gLn0fEg","8F6wlP#","8NjlblQ","8RKgIyX7FL","8RdAcGOpWwl","8RdfG!","8coRw0Ut","8eOYUDC","8lg3uAGb","8qqZTzUK&Z%v","8wgK6JzoD3h","93HWxHv2$jE!","97%Gb?","9??7c7TZd","9?Cw6novK","9E6B0dJOtrio","9EssjIxXnnf","9HAuXOLzGR","9HOJmsPE","9IemtDMq6h","9LTJeG@LwoZ","9M0eF5Sms$sK","9NX?IHgq9?X4","9i9g#d9mdNA","9iH2rWOa","9vC%EqAtNw","?!W?3Iwa","?$k26ngUo","?%N3m5","?07h4kD1Z","?3KGbTLbt","?96sq7dVXd$","?AzEd5CceP","?CSUwa?T","?H@UoQnumR","?PsD0Q3","?RMkTG","?RcXqyvw","?VhE8?SuK","?XjGi$cSb","?Z1UP$w?h#","?k?SlC2","?oNtW$x7M","@2TGTNw","@59sCweFJ","@5WvimhR2","@9F!OS","@@txu2&7u4","@GEUKn","@M9&AX2","@QKp!d6","@R%Y2DnVjuk&","@VBo%13T","@u6#Ey","@wtE1hfju3e","A%OJRVV","A1eYwSa3","A?Xt7N?m3J","AEgm0&$iM5C","AFco$gj","AGCA3em","AJvZIAj","AU68BT","AaGHJClpH","Ad4rPg2LKA83","Ak32FQz","Akjl2n9C","AnaIiDL","Apur5iMk&sn#","AuDUWFXX","Av8I47R","AzBh93N","B#i6E#eCBh$","B$v5i7G$uR%K","B1frBobb7v","B3vxdpK","BC0WHvhpo","BDluoFOas","BTq9FUs@","Bc@r2!0iyX?K","BuVrofa","C45zi?8l","C4@5KFu","CA%mFY!!StN","CAsSI&","CF2Uw4K6h","CIGRmmW","COK$n?L$th","COTU0?FDJ","CPZ!vcQc4Dw","CRy09JraB","CV$5&rw9B6B","CZggdznQNI6E","CcjaIFseFW","Cgzj4v872UAa","Cj4s2D!","CnHA?DqNqtfq","CvLSxz@u","D#bm01drX","D9KIj1j7","DAHh%bkn#2$","DEG8hTz","DMoLEcx1W","DYNu8wF","DhIbdLmb","DhiuUj4","Di@v3F&4X","Dq71gegH","Dt4$lQmYvy#","E!VBtld","E$vGYVc0pmg","E07USp5","E0yt5nz","E2Nu9kZU","E4Afj1K4k7D","E?zMODGq","EFHmn#R2K","EJOY545Kn","EJg91FSFfR6","EMgP87Ut$naw","ENCLWev","ET6sKQWMzQC","ETAO6jokZNSX","Ei0kgZPC5In$","EjEedA","Em48Xi8Hfw","ErIQGnJVfz","F$gc1u@B2s","F6SQlq","FHVBrzZ","FJBzOnjP","FLDhQ5","FNHp$u","FWz?41bgFLLD","Fdysmn$zMMn","FgP!3k@hOOEV","FjvBSqNG%!","FkT%GunxJC","FnjtCj6cZ0s","FqjYv4","FsJ$IA","FwZ58G9#Ese","FyT1SHbnptx","Fz!lyh","Fz#JUyYcnkL8","G$$C@!rC","G0ohuEzK0","G1FZkd@b","G3r4zEBVN","G8Ld%pT","G96KD6NnSZVH","G@Z!GCRdJrQ","GGP0H9Ql6S","GIdorTgepQz1","GT3ssY0","GXuusWJGh3Q","GY6RrN","GexdNN","Gn@YzM%&Mj%2","GoVluG&","Gr38Mks?3Xk","GzQq@gb","H4clSRdr","H50pFCh1@?wx","H@#JdA","H@8STi5zm3f","HFgO&L3w3x","HMKmp?1uNTK","HML9vN@","HP8qw5u4","HQLq4Oo","HQUFD43S","HRHS6A","HVPmPQ","HWMkAAmj","HXaZivE","HYGm%WvtAq","Hb&wKZgiwm","Hg03RAbEJx","HjmTWUl","HkCI$iaALR6s","HkVEs34&8Jw","HyWz8k","I!w4zON@","I30ADTX","I4O$BJwMY","I6bnsm","I8xxUKuK9@l2","IA!n&fpZ","ICJmn1rWBvm","IPz3SkL4","IS4NpbLI$","IVm5aR","IXtF#p16WIH","IZWs3Q$","IlPpeR20SE","Ix#YkslEn51u","J1jeLd","J7?yUSOyYuy","J8oUTVv","JC@8oIaXEV","JHTvoV6vpy","JM89MHS","JUDkfE3K","JUG#!Ipj","JutpWx","K#&mOtU$IW","K#?tu%BYM","K&cc%p%PLgG","K3Z1YttlCUmt","K5BuaNj","K?z3UP@b#","KM7r0XN8qkS","KUBuuT2G","Kb3R1dzaKh","Kbw@FHJqD","KdAN6oT","Kf41oh$a","KgY3LZ6","KhfykQZxGy","KxclmKIkTnqo","L#6GV%te","L4GgqAAh","LAff&$Tb","LEygCy#?","LIrt0LWKIo","LPku!BfK2!tT","LTKqwStK","LVvVcL","LZiyrKy","Ls?HGFJOPe4k","M&76zzU5","M2LeYyGVwaL2","M3GV!3v5K8LM","M82zmaWz&","M9!FLt$","MCT?@9D@kM","MI9pZ05","MPSw7nuy@Y!a","MSSBePleij3","MT46t3","Ma%K&WqPRO8G","MhNARB9i","MoPHDMF!9c$M","Mr%0IlJ4","Mr7PxTf4EAtF","MwkJRAyC%","N$NDdNBBfua1","N&hkgRY","N5HDzpKPQ","N7V9MsMbcdMN","N@?9kzZP","NAw@LPbSa","NBzzwmuNXyl&","NJ$BCqr","NKwm&Yjet#","NREdeW","NZ%Y&??zK","NiIw2pr!5??","Nj$g2G","NmNntsppEd&","NoBSYXXTX","Nt0$N8Cy5sXX","NyDQugS513#","O2StJrnCqC&","O65vGtWe","OClUQgF$0$","OLvykDy","Oc#jeBrPC","Oh0mX$r74Q","OlYsnD","OlvsGvJJW6@","OnVQAh1OL","OvYR14Poi","P2F1Ld","P2bgbL8ikm","P2oMyiokGFtg","P5nXw&VZD","P7Ru85#","P@QRNBagycgR","PBcg?dmv?","PDVq4y5qFq@p","PE!tDYvq9!BW","PJkjDZc8L","PXgq@sU1","Pd3Gju","Pgg4vc3","PiuG9s","Pp@UnjVL#x","PxEBBp%J#","PxX3MQiqT97q","Q!!SN@VLJpJK","Q!GW5i","Q3NtG4R","Q40krs6","QBipGHhgFob","QD8znsn!$6v","QIMUw5ZW","QJ8mPaMazd","QJaiR8","QNgQ?gr$WJ","QZcKLVqSN","QZdOume18gli","Qf#vAoor6","QfP?HSh2x","QhHvaM","QqMx%h","QqnDfPkQ","Qwcby3EaaKa","Qy7q4m","Qygf6N5#l","R1dXPhc$j","R2lr7O#GllW","R4PDEUlew&","R?LsXPJ","RCCwN1q!T6","RCdM&UTS","RIqBV4j!","RYKQp9h","RenRo#@","RgGqDp","Rine9!8@uG","RtfvkHK98X","RtiA8U4Vg82a","RupAntpn","S&qnU%T?q","S1#v3NjDjE","S87sd7rzNJzt","SD8Fb%F@","SEzs%@","SH%k7!","Sei#aFOog","Ses%YJ","SfzAJrwlny8%","SgfWsXgQJXxR","SiZw8K","SjtLlRcM6","Sm7Bw8","Srbm74&3Fk","Szi&E%","T#$S6sq0o8","T2PsXCCc7","T7JxrRNVeN","T8lz9krBdn","T8wzl4Q","T9GhJ@u","T?#MLk2%i","TQ%Sny","TVN20SX","TcHf#QP","TeLeECgx9l","TnZ6Car3Hc","Txr9yWZ","U2iA6EM","U6vWEH5pw","U@J2lX51?x","UBACWlXc","UE!QyfWM0t","UHsPx3j","UIKBqZ28y0E","UNdQcKQ9iW4","UPZgn2Hit","USbBP7LN3bD","UYqULf@lbZ","Ueq8O4oV85","UgTnU!Cj0r","UjyY9GkB4","UmJcSac4fF#F","Us@GY4I9ZY","Uv22yVOm5","UvUomM%","V3O9#E55m#m","V59e5?Nh04Um","VBP1KE57","VBbevHgzQC","VI!!8x","VPlVgaMs","VW9KHMW@f","VjBdWagTXgv","VkJMa@","VrAHSjmgH1","Vs2%i8D#","VwS5xB","Vx1MZ0Wb6","VzVXX5rR","W$EbgC","W%9%XNL85","W3@03mkAkH","W5Qps&Q","W75RzAZ","W?Ny%wA","W?XRF4","WAzMT&","WMYUGkXCqR","WPmU0gj","WSEDeE1XwD8","WSWS1gF","Wf4oqqsf","WshYok","Wu$qmsziBX","Wyr9nnIV","Wz!PA3#aYv","WzIsIs6iqg","X2sT5JUss76","X3%6dBDyfe2Y","X3e?TdF#$H9","X5X96xD","X6iq!W","XG@RqVV$80qh","XJWCh6tcZ","XPpT3GvG6F%m","XPxkp!FLuqxd","XWVCRHeDZ","Xg@AoLc&#W","Xk09tr","XkaozRS","XkvxvlU8#","Xmrqjzl","XnYeep","XuMnpA","Y$$eKa2t6J","Y0LuRD","Y4?SAh?6","YAQ@Cgcp","YJrCh%p","YNikv8miCkxP","YO97O6bh","YQ#%m@Wv4ii","YYVvS$","YZSLoocNAws","Yg3164kob","Yi@Z#uZJ","YlSHiLbhE1G","YnX$yuA","YoO3#ro5eKw","YrUtpkbIpr9","Z!I8ib","Z%4WG@CY#E&A","Z3Qn#D!vz59M","Z90xS8@rD","Z9kNfkf","ZBB@433cR","ZV$48qS","ZZVhO!e","Zb@fY#7sBMu","ZiD54XrO","Zk@7n?","ZrDNN2@V","a%bhBI","a%vHfEtYeL","a0DSbyw","a13v%Sm7k","aGzqZ0Z34hq4","aJ?Fnj!k4u","aMH0r&pEkN","acqW#n4J5","ad$F5HNc&Ch","adzUcqqj","agPfSZ!ore9%","aiAlxmlV","ajrms@paAxR","ak9jo5iKdd7m","arKD3iT","ayZeGWiw","b&?2Yf2rJJtl","b3#%bHjaOIh","bE5qrOn3","bFliy%v!FYs","bG@%AZT82Qc","bLWEfX?2jj!","bXv4vrCVec","bY6Ro@iJB52X","bai@LTdsnmQ!","bn$5n@I","boTIWHoFvyQ","bxjHTePXfy86","c58Zet4C!!3r","c@wckp","cBroMO","cCW3r3a4%w","cEVY7@","cKmd#h5#Lb","cb#LuMWAnwmL","cejU@bclc","cg6lYmlG3v1U","ciM5zJI","cm$C%&yTDIx","cn27blLA1t5","coLd0i$v","cwuOad6#Gp&K","d%WT5cZjI","d0EyrC","d6n$ObKmLH2","d90J%8!Uj1v","dCQGKeb","dHxwmN","dJQaR%No3iHW","dLCPVQJl#IS","dMAPFO1L","dOVT!fCHt","dOsQx4oRe","dRNnyuH","dWXgpP7T","dXB4Bd","dcIK!5o%dSk0","dn$0Ugj6!G","dnumV$d9?E14","dsU78s8TOdN0","e#y49t","e&OJ1I8q","e1uc1$Ub4","e7$qca4","eE8nv%iEb","eFtXdpfdRF!","eHViToiAs","eKVJCA","eQBMT1","eWm8VVMGt@i","ehaCzH","euvOyojk!vO","ew?vs%PC","exb$kmnVoFX","f#@dRmlMfU","f18Pda","f?dZaDHrMx","fEXOG71Krr","fN5rhF7lLPW","fbF&Y81GPuh","fhRYZR3p","fhhvkYUvm3m","fkwIBTbrJRN","fomCXXy","fuC3xGz62","g4nN3qC%yf6","g9sDQ4GT5","g?ICYc#nK","gATdUxtPuX","gHY@N3i","gJY1SbUZ$Rlq","gUztIjc2m","gVK9qXVaD","geFNWuTy","gfpMP1yB?3H3","gj1dOgth","gjPUeaf","gkmw1Zv","gmIGYIBtvd","gtz?FMC0#m","h2r78PpZa","h4yUjP7ab","h?PLeKYvNmiA","h@&2BA","h@a8L1","hEaQe$","hFMMO2$","hL$Hg%8ESc","hRAtpQ8","hVd!ttlw9","hXs2@7kv66t","hYNOXD","hbGw4e","hdq6Kg","he0v7hGI","hiZfS?w24N$G","hiezXS?DaFzr","hmESMApzY","ho?!Sh","hp0vk?R","hqFGcX","hqqhqaPu85","hrxV5DAgO&B@","hsDFgebBERK","htpu&k8?s","i!EPTYS","i%0FpLBR6oK","i53?FJdVAS&","iEuLh46?j","iHWszL","iNEri%M","iUtZD!c","ieMjZ!","j#OYtVDvD","j$&ZPz0XY","j0?Nzr4","j2QA@JxuA","j3GrsmBv","j?5sUGtn&1","jAvtD&z","jBNo#dS","jPKiRgZMwEa","jVwzv3LWTo","jY7UWonGgC3","ja9ocvOf&4t","k4MXIz","k5$8SzNM","k9Dg06GMqlF6","k9iYQBDn$","kMGg6?","kQkN!%","kVdADkbp","kaEZQGAzkB","ki?#1Jru","kjf9#E","kkIaH$FiiYN","kxhY?pc","kxurA2u&MmM","l!biUz@7nTa#","l2HA3JXwNBT4","l69AEH","l?WmFYPE$eK","lA51T#SzV?","lC!sA35lb","lLaaAfiDw","lMHldOVd3P@N","lYH9I1b","lp85Y#0HS0","lv4dh7vCZW2Y","lzt&h0qY","m#J9Hrx","m$9?HG45bUPd","m7!Wp8","m7z5arrz&Qx","mH80wdcsdRAR","mIARcFpCR8","mOPsLu","mUQMgq","mY1&vERePhA","mgSRBxS!dlb","mmPu4id","mzDmIp","n#mUlG","n8pvAw5bGngu","n9cCcylvq4","nMDzC6E5","nMkol4bANhV","nSEF8O","nYHl%KEb","nYqKxU6","naSpslEoT","ncDWU1P","neo77Gje","nfg4pcd","npVXIsw8Ao","nqHbU0u","nyPnKec!KQr","o1Shooll5F8","o4%O91","o8ErEuTvqN","o?Sm25j@2D3","oLN5rAS","oPg3Ab1Q","oT86lBqJ9jQ","od%CNUELg","oeA59a2V","opTqp7UvM","os$w%$$Xq#i","oxED12X502","oz&Ukkom","ozP8qSs","p&SovcG","pCyvdA","pE7!@Z%W","pJFVde9RB","pOFdK5hyerxR","pQl6Zc?s2uA","pRLYYD","pYQ2N@@Xga#v","pYmKM@YJJmr","pqn0&m40","q3HzLs","q4edKZ","q6FrkINNj9","q9R$9b$IChT","qOsZ@r3Scly","qOwFB4g6VyoQ","qWfkB4h?R","qgBl1udIL","qkslHUpKt0Y","qmGfJcaMp","r8Va&NXGB3UM","r9J@MO","rCXyv2MPdk","rMY&hngji","rO!Pr4yv55M","rRB?Bgq8","rYcwg5v1Ea","rd!35#R#0w","rh3tsN5nC","ruY5GN1hy","s!@rblZ4F!$","s&K#C$","s5WBPh4eTS","sLdzcLxTXc","sM5odF","sV?VwiQ1c","saXzOQ9vCa","sl!$8w","spDe!8jO5JhQ","sr#3xBd","sr3Zkcle4","sv!BLU42","t1N?zTeQwX","t4aBA50HMnCP","t50P4q","t5uajoSYQG","tAqHZ0Lr","tB?1uqu","tCl6hofgf$cy","tQq2Um6","tcNrdT!","tf3i$YrWO","tnLLTd?r5Iv$","tos@AowTOmZA","tz7DkPxGunl","u&kc#VTnxE9r","u4MJxRZ","u4YI@PcXi4zD","u4ZnT6","u5J43hbv","uEHCx0uv0Zj@","uFyZq7","uKdtvo","uKz6NkFUG&A2","uRo5R4","uagko8b","uaxn5$2RVHI","ubBAG@&t48","ucN$1rj","udi?VnRk6","usf#?dys1","uu$F6lBJW","uy22xW?DOSid","v!9RR!6%HG6","v!s6OEeJ%MyZ","v$1vGBR","v$rETPGVBt","v68Y?uac4p","vF3jaN2!u","vHI5$3QqT","vJH%OEaSPntk","vLDLPCbD","vLfRi9","vN%9I0YCTV","vO?2IHpGgz","vRy&RSI#gU","vZoyfFs8dJw0","vfWQczQ","vg%5OLmAT","vkBthKBGbKWn","vv7zJ#NXdgYa","w4@4dtwSd","w?UbUF!W","w@PUpObp","wExVYq&72","wOFGc?","wQqWIRoG#wV","wgcMjKEGicH","wnWN#q%L9o","wpSR95hgCcu","ws53KC6Eg","wuN3#j?udu","wytcUu9G3CYL","xHCy?@Z4Stmz","xHgQ3te1WBA","xKyYRP!","xW7&?QvB!UNe","xvbmWJbMeO","y&ytNOH@","y6Rqn6X","y81F9Wj!yvi","y?&sETFS","yA$t4zMCgz6","yAO6UfRZs6","yCrB9C%","yL1!#dG","yLjDtB","yPllBxii","yRmbeB","yVzoxj","yb2LzoybYLw","yfSPqdvo08","ykd4fXSw@lG","yquPcnNA@A","z1q?rMV6","z2c4r0@pJaG","z7nW1N%?KKB","zM$BykAG","zMV@YIv","zNzylakR8Aa","zX%f0LG8bZdf","zX5!kiW","zcHb2zm","ziwAaDU","zlBfsuHXV#u","zpC2u?vy74Fa","zqmG$E#Hf5v","zvqA9DT?Ftw@","zwC7kUHRXt"];
+let usedCodes = JSON.parse(localStorage.getItem("usedCodes") || "[]");
+let drawDone = false;
+
+// استرجاع تفاصيل السحب من localStorage
+document.getElementById("detailsInput").value = localStorage.getItem("detailsInput") || "";
+
+const grid = document.getElementById("grid");
+
+// إنشاء 100 مربع
+for (let i = 1; i <= 100; i++) {
+  const div = document.createElement("div");
+  div.className = "box";
+  div.innerHTML = `<input placeholder="${i}" value="${localStorage.getItem('participant' + i) || ''}">`;
+  grid.appendChild(div);
+}
+
+// حفظ المشاركين عند التعديل
+document.querySelectorAll(".box input").forEach((input, i) => {
+  input.addEventListener('input', () => {
+    localStorage.setItem('participant' + (i + 1), input.value);
+  });
+});
+
+// حفظ تفاصيل السحب
+document.getElementById("detailsInput").addEventListener('input', () => {
+  localStorage.setItem("detailsInput", document.getElementById("detailsInput").value);
+});
+
+// تنفيذ القرعة
+function runDraw() {
+  if (drawDone) return alert("تمت القرعة مسبقاً");
+
+  const code = document.getElementById("codeInput").value.trim();
+  if (!VALID_CODES.includes(code)) return alert("كود غير صالح");
+  if (usedCodes.includes(code)) return alert("الكود مستخدم");
+
+  let filled = [];
+  document.querySelectorAll(".box input").forEach((input, i) => {
+    if (input.value.trim() !== "") filled.push({ name: input.value, index: i });
+  });
+
+  if (filled.length === 0) return alert("لا يوجد مشاركين");
+
+  const winner = filled[Math.floor(Math.random() * filled.length)];
+  document.querySelectorAll(".box")[winner.index].classList.add("winner");
+
+  // 🔔 إظهار الإنذار في المنتصف
+  document.getElementById("winnerName").innerText =
+    winner.name + " (رقم " + (winner.index + 1) + ")";
+  document.getElementById("overlay").style.display = "flex";
+
+  drawDone = true;
+  usedCodes.push(code);
+  localStorage.setItem("usedCodes", JSON.stringify(usedCodes));
+
+  document.getElementById("drawBtn").disabled = true;
+  document.getElementById("newDrawBtn").style.display = "inline-block";
+}
+
+function closeAlert() {
+  document.getElementById("overlay").style.display = "none";
+}
+
+function newDraw() {
+  localStorage.clear();
+  location.reload();
+}
+</script>
+
+</body>
+</html>
